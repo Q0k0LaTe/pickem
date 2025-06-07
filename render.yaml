@@ -1,0 +1,42 @@
+services:
+  # Backend API Service
+  - type: web
+    name: pickempro-api
+    env: python
+    plan: free
+    buildCommand: |
+      cd backend
+      pip install -r requirements.txt
+    startCommand: |
+      cd backend
+      gunicorn --bind 0.0.0.0:$PORT --workers 2 src.main:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pickempro-db
+          property: connectionString
+      - key: STEAM_API_KEY
+        sync: false  # Set manually in Render dashboard
+    healthCheckPath: /api/health
+
+  # Frontend Static Site
+  - type: static
+    name: pickempro-frontend
+    buildCommand: |
+      cd frontend
+      npm install
+      npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://pickempro-api.onrender.com
+
+# Database
+databases:
+  - name: pickempro-db
+    plan: free
+
