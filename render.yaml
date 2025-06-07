@@ -1,15 +1,13 @@
 services:
-  # Backend API Service
+  # Backend API
   - type: web
     name: pickempro-api
-    env: python
+    runtime: python          # or keep env: python
     plan: free
     buildCommand: |
-      cd backend
-      pip install -r requirements.txt
+      cd backend && pip install -r requirements.txt
     startCommand: |
-      cd backend
-      gunicorn --bind 0.0.0.0:$PORT --workers 2 src.main:app
+      cd backend && gunicorn --bind 0.0.0.0:$PORT --workers 2 src.main:app
     envVars:
       - key: FLASK_ENV
         value: production
@@ -20,21 +18,21 @@ services:
           name: pickempro-db
           property: connectionString
       - key: STEAM_API_KEY
-        sync: false  # Set manually in Render dashboard
+        sync: false
     healthCheckPath: /api/health
 
-  # Frontend Static Site
-  - type: static
+  # Front-end static site
+  - type: web                # keep `web`, add `runtime: static`
     name: pickempro-frontend
+    runtime: static
+    # static sites are always on the free plan, so omit `plan`
     buildCommand: |
-      cd frontend
-      npm install
-      npm run build
+      cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
         value: https://pickempro-api.onrender.com
-
+        # used only at build-time for Vite; the built files are served as plain HTML/JS/CSS
 # Database
 databases:
   - name: pickempro-db
